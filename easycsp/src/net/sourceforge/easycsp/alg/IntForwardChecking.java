@@ -16,29 +16,29 @@
  * Please contact the author ( cordis.victor@gmail.com ) if you need additional
  * information or have any questions.
  */
-package net.sourceforge.easycsp.alg.numeric;
+package net.sourceforge.easycsp.alg;
 
 import net.sourceforge.easycsp.Algorithm;
 import net.sourceforge.easycsp.Algorithm.Exhaustive;
 import net.sourceforge.easycsp.Constraint;
 import net.sourceforge.easycsp.IntDomain;
 import net.sourceforge.easycsp.IntDomain.IntDomainIterator;
-import net.sourceforge.easycsp.numeric.IntEasyCSP;
-import net.sourceforge.easycsp.numeric.IntVariable;
+import net.sourceforge.easycsp.IntEasyCSP;
+import net.sourceforge.easycsp.IntSolution;
+import net.sourceforge.easycsp.IntVariable;
 
 /**
- * IntForwardChecking class is a variation ForwardChecking for int-based CSPs.
+ * IntForwardChecking class implements a variation of ForwardChecking for int-based CSPs.
  * This algorithm seeks all solutions, building them in the minimum variable heuristic order.
  *
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @see Exhaustive
  * @since 1.2.0
  */
-public final class IntForwardChecking<U> extends Algorithm<U, Integer> implements Exhaustive {
+public final class IntForwardChecking<U> extends Algorithm<IntEasyCSP<U>, IntSolution<U>> implements Exhaustive {
 
     // backtracking components:
-    private final IntEasyCSP<U> sourceOfInts;
     private int[] stack;
     private int size;
     private IntDomainIterator[] domains;
@@ -52,24 +52,15 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
      * @param source the constraint graph the new algorithm will run on
      */
     public IntForwardChecking(IntEasyCSP<U> source) {
-        super(source);
-        this.sourceOfInts = source;
-        this.initComponents();
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    protected void initComponents() {
-        this.stack = new int[this.source.variableCount()];
+        super(source, IntSolution::new);
+        final int originalVariableCount = this.source.getOriginalVariableCount();
+        this.stack = new int[originalVariableCount];
         this.size = -1;
-        final int originalVariableCount = this.sourceOfInts.getOriginalVariableCount();
         this.domains = new IntDomainIterator[originalVariableCount];
         this.removed = new IntDomain[originalVariableCount];
         this.undo = new IntDomain[originalVariableCount][];
         for (int i = 0; i < originalVariableCount; i++) {
-            this.domains[i] = this.sourceOfInts.variableAt(i).getDomain().domainIterator();
+            this.domains[i] = this.source.variableAt(i).getDomain().domainIterator();
             this.removed[i] = new IntDomain();
             this.undo[i] = new IntDomain[originalVariableCount];
         }
@@ -94,8 +85,7 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
             if (this.domains[currentIndex].hasNext()) {
                 final int value = this.domains[currentIndex].nextInt();
                 if (!this.removed[currentIndex].contains(this.domains[currentIndex].currentIndex())) {
-                    this.solution.assign(currentIndex, value);
-                    if (assignAuxiliariesOf(currentIndex)) {
+                    if (this.solution.assignAndCheckOnlyAuxiliary(currentIndex, value)) {
                         if (this.solution.isComplete()) {
                             this.successful = true;
                             this.running = false;
@@ -109,11 +99,10 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
                             this.undoDomainRemoves(currentIndex);
                         }
                     } else {
-                        this.unassignAuxiliariesOf(currentIndex);
+                        this.solution.unassign(currentIndex);
                     }
                 }
             } else {
-                this.unassignAuxiliariesOf(currentIndex);
                 this.solution.unassign(currentIndex);
                 this.domains[currentIndex].reset();
                 this.size--;
@@ -140,7 +129,7 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
         for (Constraint c : this.source) {
             if (c.degree() == Constraint.DEGREE_UNARY) {
                 final int variableIndex = c.getVariableIndexAt(0);
-                final IntVariable cVar = this.sourceOfInts.variableAt(variableIndex);
+                final IntVariable cVar = this.source.variableAt(variableIndex);
                 if (!cVar.isAuxiliary()) {
                     while (this.domains[variableIndex].hasNext()) {
                         final int value = this.domains[variableIndex].nextInt();
@@ -167,46 +156,21 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
         return minVariable;
     }
 
-    private boolean assignAuxiliariesOf(int varIndex) {
-        for (int i = this.sourceOfInts.getOriginalVariableCount(); i < this.stack.length; i++) {
-            IntVariable iVar = sourceOfInts.variableAt(i);
-            if (iVar.isTernary()) {
-                if ((iVar.getIndexVar0() == varIndex || iVar.getIndexVar1() == varIndex)
-                        && (solution.isAssigned(iVar.getIndexVar0()) && solution.isAssigned(iVar.getIndexVar1()))) {
-                    solution.assign(i, iVar.compute(solution.value(iVar.getIndexVar0()), solution.value(iVar.getIndexVar1())));
-                    if (this.source.hasConflicts(solution, i)) {
-                        return false;
-                    }
-                }
-            } else {
-                if (iVar.getIndexVar0() == varIndex) {
-                    solution.assign(i, iVar.compute(solution.value(iVar.getIndexVar0())));
-                    if (this.source.hasConflicts(solution, i)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     private int check(int index) {
         int minVariable = -1;
         int minSize = -1;
         for (int i = 0; i < this.domains.length; i++) {
             if (!this.solution.isAssigned(i)) {
-                IntVariable iVar = this.sourceOfInts.variableAt(i);
+                IntVariable iVar = this.source.variableAt(i);
                 int j = 0;
                 while (this.domains[i].hasNext()) {
                     final int value = this.domains[i].nextInt();
                     if (!this.removed[i].contains(j)) {
-                        this.solution.assign(i, value);
-                        if (this.source.hasConflicts(solution, i)
-                                || !assignAuxiliariesOf(i)) {
+                        if (!this.solution.assignAndCheck(i, value)) {
                             this.removed[i].addInt(j);
                             this.markDomainIndexForUndo(i, index, j);
                         }
-                        this.unassignAuxiliariesOf(i);
+                        this.solution.unassign(i);
                     }
                     j++;
                 }
@@ -243,17 +207,6 @@ public final class IntForwardChecking<U> extends Algorithm<U, Integer> implement
                         this.removed[i].removeInt(it.nextInt());
                     }
                     id.clear();
-                }
-            }
-        }
-    }
-
-    private void unassignAuxiliariesOf(int index) {
-        for (int i = this.sourceOfInts.getOriginalVariableCount(); i < this.stack.length; i++) {
-            if (this.solution.isAssigned(i)) {
-                IntVariable iVar = this.sourceOfInts.variableAt(i);
-                if (iVar.getIndexVar0() == index || iVar.getIndexVar1() == index) {
-                    this.solution.unassign(i);
                 }
             }
         }

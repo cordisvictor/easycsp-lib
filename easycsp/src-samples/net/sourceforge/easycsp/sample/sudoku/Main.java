@@ -22,7 +22,7 @@ import net.sourceforge.easycsp.*;
 
 import java.util.Arrays;
 
-import static net.sourceforge.easycsp.Constraints.equal;
+import static net.sourceforge.easycsp.Constraints.is;
 import static net.sourceforge.easycsp.Constraints.notEqual;
 
 public class Main {
@@ -48,8 +48,8 @@ public class Main {
                 .flatMap(row -> Arrays.stream(row))
                 .map(cell -> new Variable<>(0, cell, new IntDomain(1, 9)))
                 .toArray(Variable[]::new);
-        EasyCSPBuilder sudoku = EasyCSPBuilder.of("Sudoku", vars);
 
+        EasyCSPBuilder<Integer, Integer> sudoku = EasyCSPBuilder.of("Sudoku", vars);
         for (int i = 0; i < 9; i++) {
             int rowOffset = i * 9;
             sudoku.constrainEachTwoInRange(notEqual(), rowOffset, rowOffset + 9); // row
@@ -64,11 +64,12 @@ public class Main {
         for (int i = 0; i < vars.length; i++) {
             int predefinedCell = vars[i].get();
             if (predefinedCell != 0) {
-                sudoku.constrain(equal(predefinedCell), i); // predefined cell values from BOARD
+                sudoku.constrain(is(predefinedCell), i); // predefined cell values from BOARD
             }
         }
+
         // solve:
-        Solver<?, Integer> solver = new Solver(sudoku.build());
+        EasyCSPSolver<Integer, Integer> solver = new EasyCSPSolver<>(sudoku.build());
         solver.stream()
                 .limit(100)
                 .forEach(Main::prettyPrint);

@@ -16,27 +16,37 @@
  * Please contact the author ( cordis.victor@gmail.com ) if you need additional
  * information or have any questions.
  */
-package net.sourceforge.easycsp.numeric;
-
-import net.sourceforge.easycsp.Solver;
-import net.sourceforge.easycsp.alg.numeric.IntForwardChecking;
+package net.sourceforge.easycsp;
 
 /**
- * IntSolver class extends Solver for IntEasyCSPs.
+ * IntEasyCSP class that is used to define int-based CSPs.
+ * This class holds the graph of a CSP(Z,D,C).
  *
  * @param <U> variables underlying object class
  * @author Cordis Victor ( cordis.victor at gmail.com)
  * @version 1.2.0
  * @since 1.2.0
  */
-public final class IntSolver<U> extends Solver<U, Integer> {
+public final class IntEasyCSP<U> extends AbstractEasyCSP<U, Integer> {
+
+    private final int originalVariableCount;
+
+    IntEasyCSP(String name, int originalVariableCount, IntVariable<U>[] variables, Constraint<U, Integer>[] constraints) {
+        super(name, variables, constraints);
+        this.originalVariableCount = originalVariableCount;
+    }
 
     /**
-     * Creates a new instance with the default algorithm.
-     *
-     * @param intEasyCSP the int-based CSP to solve
+     * {@inheritDoc}
      */
-    public IntSolver(IntEasyCSP<U> intEasyCSP) {
-        super(new IntForwardChecking<>(intEasyCSP));
+    public IntVariable<U> variableAt(int index) {
+        return (IntVariable<U>) super.variableAt(index);
+    }
+
+    /**
+     * Gets the original count of variables, i.e. the variable count minus the auxiliary variables.
+     */
+    public int getOriginalVariableCount() {
+        return originalVariableCount;
     }
 }

@@ -18,24 +18,29 @@
  */
 package net.sourceforge.easycsp;
 
+import java.util.function.Function;
+
 /**
- * Algorithm class takes csp as input and is used by a {@linkplain Solver} for solving that CSP.
- * This class also implements {@linkplain Runnable}, in order to ease
- * running several algorithms in a multi-threading scenario.
+ * Algorithm class takes a csp as input and is used by a {@linkplain Solver} for solving that CSP.
+ * <p>
+ * This class is a {@linkplain Runnable}, in order to ease multi-threading scenario.
+ * It also manages the running and successful flags.
+ * If {@linkplain #interrupt()} is invoked on this instance then the run
+ * method must stop in a safely manner.
  * <ul>
  * <li>NOTE:</li>
- * <li>Algorithm class is not thread-safe and cannot be shared between solvers</li>
+ * <li>This class is not thread-safe and cannot be shared between solvers</li>
  * <li>If the source CSP is modified then the algorithm must be reset-ed.</li>
  * <li>Algorithms used in parallel solving must not alter the CSP they run on.</li>
  * </ul>
  *
- * @param <U> variables underlying object class
- * @param <T> variables domain values class
+ * @param <P> the csp problem class
+ * @param <S> the csp solution class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.0
  */
-public abstract class Algorithm<U, T> implements Runnable {
+public abstract class Algorithm<P extends AbstractEasyCSP, S extends Solution> implements Runnable {
 
     /**
      * Exhaustive interface that should be implemented by
@@ -119,11 +124,11 @@ public abstract class Algorithm<U, T> implements Runnable {
     /**
      * The source CSP this instance runs on.
      */
-    protected final AbstractEasyCSP<U, T> source;
+    protected final P source;
     /**
      * The solution to be built.
      */
-    protected Solution<U, T> solution;
+    protected final S solution;
     /**
      * The flag indicating if a solution is available.
      */
@@ -133,14 +138,9 @@ public abstract class Algorithm<U, T> implements Runnable {
      */
     protected boolean running;
 
-    /**
-     * Creates a new instance with the given constraint graph.
-     *
-     * @param source the constraint graph the new algorithm will run on
-     */
-    public Algorithm(AbstractEasyCSP<U, T> source) {
+    protected Algorithm(P source, Function<P, S> createSolution) {
         this.source = source;
-        this.solution = new Solution(source);
+        this.solution = createSolution.apply(source);
         this.successful = false;
         this.running = false;
     }
@@ -148,9 +148,9 @@ public abstract class Algorithm<U, T> implements Runnable {
     /**
      * Gets the solution that this algorithm produced.
      *
-     * @return the solution containing the solution
+     * @return the solution containing the solution values
      */
-    public Solution<U, T> getSolution() {
+    public S getSolution() {
         if (!this.successful) {
             throw new IllegalStateException("not successful");
         }
@@ -176,40 +176,9 @@ public abstract class Algorithm<U, T> implements Runnable {
     }
 
     /**
-     * Initialization hook for the algorithm components.
-     */
-    protected void initComponents() {
-    }
-
-    /**
      * Signals this instance to interrupt as soon as possible.
      */
     public void interrupt() {
         this.running = false;
-    }
-
-    /**
-     * Runs this algorithm and manages the running and successful flags. If a
-     * solution is found then the successful flag must be set to true, otherwise
-     * the successful flag must be false.
-     * <p>
-     * If {@linkplain #interrupt()} is invoked on this instance then the run
-     * method must return in a safely manner.
-     * <p>
-     * {@inheritDoc }
-     */
-    @Override
-    public abstract void run();
-
-    /**
-     * Resets this algorithm by setting the running and successful flags to
-     * false, clearing the solution and re-initializing the algorithm's
-     * components.
-     */
-    public void reset() {
-        this.running = false;
-        this.successful = false;
-        this.solution.clear();
-        this.initComponents();
     }
 }

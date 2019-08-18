@@ -19,20 +19,20 @@
 package net.sourceforge.easycsp.alg;
 
 import net.sourceforge.easycsp.Algorithm;
-import net.sourceforge.easycsp.EasyCSP;
-import net.sourceforge.easycsp.Solution;
+import net.sourceforge.easycsp.IntEasyCSP;
+import net.sourceforge.easycsp.IntSolution;
 
 /**
- * Greedy class is a stochastic {@link Algorithm}.
+ * IntGreedy class implements a variation of Greedy for int-based CSPs.
  * This algorithm builds the solution, starting from variables[0] to
  * variables[n-1], by assigning the variables with the domain value with the
  * highest score given by the heuristic function.
  *
  * @author Cordis Victor ( cordis.victor at gmail.com)
  * @version 1.2.1
- * @since 1.0
+ * @since 1.2.1
  */
-public final class Greedy<U, T> extends Algorithm<EasyCSP<U, T>, Solution<U, T>> {
+public final class IntGreedy<U> extends Algorithm<IntEasyCSP<U>, IntSolution<U>> {
 
     private final Fitness heuristic;
 
@@ -47,8 +47,8 @@ public final class Greedy<U, T> extends Algorithm<EasyCSP<U, T>, Solution<U, T>>
      * @param heuristic the heuristic function used by this algorithm
      * @throws IllegalArgumentException if <code>heuristic == null</code>
      */
-    public Greedy(EasyCSP<U, T> source, Fitness<U, T> heuristic) {
-        super(source, Solution::new);
+    public IntGreedy(IntEasyCSP<U> source, Fitness<U, Integer> heuristic) {
+        super(source, IntSolution::new);
         if (heuristic == null) {
             throw new IllegalArgumentException("heuristic: null");
         }
@@ -62,16 +62,15 @@ public final class Greedy<U, T> extends Algorithm<EasyCSP<U, T>, Solution<U, T>>
     public void run() {
         this.running = true;
         this.successful = false;
-        final int variableCount = this.source.variableCount();
-        for (int variableIndex = 0; variableIndex < variableCount; variableIndex++) {
+        final int originalVarCount = this.source.getOriginalVariableCount();
+        for (int variableIndex = 0; variableIndex < originalVarCount; variableIndex++) {
             if (!this.running) {
                 return; // safe stopping point.
             }
             double max = Double.NEGATIVE_INFINITY;
-            T maxValue = null;
-            for (T value : this.source.variableAt(variableIndex).getDomain()) {
-                this.solution.assign(variableIndex, value);
-                if (!this.source.hasConflicts(this.solution, variableIndex)) {
+            Integer maxValue = null;
+            for (Integer value : this.source.variableAt(variableIndex).getDomain()) {
+                if (solution.assignAndCheck(variableIndex, value)) {
                     double eval = this.heuristic.compute(this.solution, variableIndex, max);
                     if (eval > max) {
                         max = eval;

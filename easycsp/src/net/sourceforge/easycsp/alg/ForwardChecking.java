@@ -27,11 +27,11 @@ import net.sourceforge.easycsp.Domain.DomainIterator;
  * This algorithm seeks all solutions, building them in the minimum variable heuristic order.
  *
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.1.3
+ * @version 1.2.1
  * @see Exhaustive
  * @since 1.0
  */
-public final class ForwardChecking<U, T> extends Algorithm<U, T> implements Exhaustive {
+public final class ForwardChecking<U, T> extends Algorithm<EasyCSP<U, T>, Solution<U, T>> implements Exhaustive {
 
     // backtracking components:
     private int[] stack;
@@ -47,15 +47,7 @@ public final class ForwardChecking<U, T> extends Algorithm<U, T> implements Exha
      * @param source the constraint graph the new algorithm will run on
      */
     public ForwardChecking(EasyCSP<U, T> source) {
-        super(source);
-        this.initComponents();
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    protected void initComponents() {
+        super(source, Solution::new);
         final int variableCount = this.source.variableCount();
         this.stack = new int[variableCount];
         this.size = -1;
@@ -117,7 +109,7 @@ public final class ForwardChecking<U, T> extends Algorithm<U, T> implements Exha
     private int check0() {
         // search min variable:
         int minVariable = 0;
-        int minSize = this.source.variableAt(0).getDomain().size();
+        int minSize = this.source.variableAt(minVariable).getDomain().size();
         for (int i = 1; i < this.domains.length; i++) {
             int iDomainSize = this.source.variableAt(i).getDomain().size();
             if (iDomainSize < minSize) {

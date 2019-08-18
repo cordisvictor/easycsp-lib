@@ -18,28 +18,27 @@
  */
 package net.sourceforge.easycsp.sample.nqueens;
 
-import net.sourceforge.easycsp.EasyCSP;
-import net.sourceforge.easycsp.EasyCSPBuilder;
-import net.sourceforge.easycsp.IntDomain;
-import net.sourceforge.easycsp.Solver;
+import net.sourceforge.easycsp.*;
 
 import java.util.stream.IntStream;
 
 public class Main {
 
-    private static final int BOARD_SIZE = 124;
+    private static final int BOARD_SIZE = 131;
 
     public static void main(String[] args) {
         // create CSP(Z,D,C):
-        Integer[] rows = IntStream.rangeClosed(1, BOARD_SIZE).mapToObj(Integer::valueOf).toArray(Integer[]::new);
-        EasyCSP<Integer, Integer> nqueens = EasyCSPBuilder.of("NQueens", new IntDomain(1, BOARD_SIZE), rows)
+        EasyCSP<Integer, Integer> nqueens = EasyCSPBuilder.of("NQueens",
+                new IntDomain(1, BOARD_SIZE),
+                IntStream.rangeClosed(1, BOARD_SIZE).mapToObj(Integer::valueOf).toArray(Integer[]::new))
                 .constrainEachTwo(assignments ->
                         !assignments.value(0).equals(assignments.value(1))
                                 && Math.abs(assignments.variable(0).get() - assignments.variable(1).get())
                                 != Math.abs(assignments.value(0) - assignments.value(1)))
                 .build();
+
         // solve:
-        Solver solver = new Solver(nqueens);
+        Solver solver = new EasyCSPSolver(nqueens);
         solver.stream()
                 .limit(100)
                 .forEach(System.out::println);

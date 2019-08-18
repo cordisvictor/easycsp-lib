@@ -18,12 +18,16 @@
  */
 package net.sourceforge.easycsp.alg;
 
-import net.sourceforge.easycsp.*;
+import net.sourceforge.easycsp.Algorithm;
+import net.sourceforge.easycsp.IntDomain;
+import net.sourceforge.easycsp.Variable;
+import net.sourceforge.easycsp.IntEasyCSP;
+import net.sourceforge.easycsp.IntSolution;
 
 import java.util.Random;
 
 /**
- * ConflictMinimizing class is a stochastic {@link Algorithm}.
+ * IntConflictMinimizing class implements a variation of ConflictMinimizing for int-based CSPs.
  * It seeks an optima, assigning all variables and
  * then trying to minimize the generated conflicts. ConflictMinimizing is
  * recommended for large size problems with possibly over-constrained CSPs which
@@ -31,9 +35,9 @@ import java.util.Random;
  *
  * @author Cordis Victor ( cordis.victor at gmail.com)
  * @version 1.2.1
- * @since 1.0
+ * @since 1.2.1
  */
-public final class ConflictMinimizing<U, T> extends Algorithm<EasyCSP<U, T>, Solution<U, T>> {
+public final class IntConflictMinimizing<U> extends Algorithm<IntEasyCSP<U>, IntSolution<U>> {
 
     private final boolean option;
     private int[] conflicts;
@@ -46,8 +50,8 @@ public final class ConflictMinimizing<U, T> extends Algorithm<EasyCSP<U, T>, Sol
      *
      * @param source the CSP the new algorithm will run on
      */
-    public static <U, T> ConflictMinimizing<U, T> searchGlobalOptimaOf(EasyCSP<U, T> source) {
-        return new ConflictMinimizing(source, true);
+    public static <U> IntConflictMinimizing<U> searchGlobalOptimaOf(IntEasyCSP<U> source) {
+        return new IntConflictMinimizing(source, true);
     }
 
     /**
@@ -56,21 +60,72 @@ public final class ConflictMinimizing<U, T> extends Algorithm<EasyCSP<U, T>, Sol
      *
      * @param source the CSP the new algorithm will run on
      */
-    public static <U, T> ConflictMinimizing<U, T> searchLocalOptimaOf(EasyCSP<U, T> source) {
-        return new ConflictMinimizing(source, false);
+    public static <U> IntConflictMinimizing<U> searchLocalOptimaOf(IntEasyCSP<U> source) {
+        return new IntConflictMinimizing(source, false);
     }
 
-    private ConflictMinimizing(EasyCSP<U, T> source, boolean option) {
-        super(source, Solution::new);
+    private IntConflictMinimizing(IntEasyCSP<U> source, boolean option) {
+        super(source, IntSolution::new);
         this.option = option;
-        this.conflicts = new int[source.variableCount()];
+        final int originalVarCount = this.source.getOriginalVariableCount();
+        this.conflicts = new int[originalVarCount];
         this.rand = new Random(System.currentTimeMillis());
         long allSizes = 0;
-        final int variableCount = this.source.variableCount();
-        for (int i = 0; i < variableCount; i++) {
+        for (int i = 0; i < originalVarCount; i++) {
             allSizes += this.source.variableAt(i).getDomain().size();
         }
-        this.iterationLimit = 2 * variableCount * allSizes + 2 * this.source.constraintCount();
+        this.iterationLimit = 2 * originalVarCount * allSizes + 2 * this.source.constraintCount();
+    }
+
+    /**
+     * {@inheritDoc }
+     */
+    @Override
+    public void run() {
+        this.running = true;
+        this.successful = false;
+        // init assignments and conflicts:
+        final int originalVarCount = this.source.getOriginalVariableCount();
+        for (int i = 0; i < originalVarCount; i++) {
+            IntDomain iVarDomain = this.source.variableAt(i).getDomain();
+            if (iVarDomain.isEmpty()) {
+                this.running = false;
+                return;
+            }
+            this.solution.assignFromDomain(i, this.rand.nextInt(iVarDomain.size()));
+        }
+        this.initConflicts();
+        // minimize conflicts:
+        if (this.option) { // search global optima for the given CSP:
+            long iterationCount = 0;
+            int vi;
+            while (this.running && (vi = this.nextVariable()) != -1) {
+                iterationCount++;
+                if (iterationCount > this.iterationLimit) {
+                    this.running = false;
+                    return;
+                }
+                this.assignVariable(vi);
+                while (this.initConflicts()) {
+                    vi = this.rand.nextInt(originalVarCount);
+                    Variable v = this.source.variableAt(vi);
+                    this.solution.assignFromDomain(vi, this.rand.nextInt(v.getDomain().size()));
+                }
+            }
+        } else { // search local optima for the given CSP:
+            int vi;
+            while (this.running && (vi = this.nextVariable()) != -1) {
+                this.assignVariable(vi);
+                if (this.initConflicts()) {
+                    this.running = false;
+                    return;
+                }
+            }
+        }
+        if (this.running) {
+            this.successful = true;
+        }
+        this.running = false;
     }
 
     private boolean initConflicts() {
@@ -96,8 +151,8 @@ public final class ConflictMinimizing<U, T> extends Algorithm<EasyCSP<U, T>, Sol
 
     private void assignVariable(int index) {
         int min = Integer.MAX_VALUE;
-        T minVal = null;
-        for (T value : this.source.variableAt(index).getDomain()) {
+        Integer minVal = null;
+        for (Integer value : this.source.variableAt(index).getDomain()) {
             this.solution.assign(index, value);
             int count = this.source.countConflicts(this.solution, index);
             if (count < min) {
@@ -106,56 +161,5 @@ public final class ConflictMinimizing<U, T> extends Algorithm<EasyCSP<U, T>, Sol
             }
         }
         this.solution.assign(index, minVal);
-    }
-
-    /**
-     * {@inheritDoc }
-     */
-    @Override
-    public void run() {
-        this.running = true;
-        this.successful = false;
-        // init assignments and conflicts:
-        final int variableCount = this.source.variableCount();
-        for (int i = 0; i < variableCount; i++) {
-            Domain<T> iVarDomain = this.source.variableAt(i).getDomain();
-            if (iVarDomain.isEmpty()) {
-                this.running = false;
-                return;
-            }
-            this.solution.assignFromDomain(i, this.rand.nextInt(iVarDomain.size()));
-        }
-        this.initConflicts();
-        // minimize conflicts:
-        if (this.option) { // search global optima for the given CSP:
-            long iterationCount = 0;
-            int vi;
-            while (this.running && (vi = this.nextVariable()) != -1) {
-                iterationCount++;
-                if (iterationCount > this.iterationLimit) {
-                    this.running = false;
-                    return;
-                }
-                this.assignVariable(vi);
-                while (this.initConflicts()) {
-                    vi = this.rand.nextInt(variableCount);
-                    Variable v = this.source.variableAt(vi);
-                    this.solution.assignFromDomain(vi, this.rand.nextInt(v.getDomain().size()));
-                }
-            }
-        } else { // search local optima for the given CSP:
-            int vi;
-            while (this.running && (vi = this.nextVariable()) != -1) {
-                this.assignVariable(vi);
-                if (this.initConflicts()) {
-                    this.running = false;
-                    return;
-                }
-            }
-        }
-        if (this.running) {
-            this.successful = true;
-        }
-        this.running = false;
     }
 }

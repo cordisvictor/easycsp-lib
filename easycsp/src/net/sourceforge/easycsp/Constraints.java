@@ -27,7 +27,7 @@ import net.sourceforge.easycsp.Constraint.Assignments;
  * Constraints class is a factory for standard and thread-safe constraint condition {@link Predicate}s.
  *
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.1.0
+ * @version 1.2.1
  * @since 1.1.0
  */
 public final class Constraints {
@@ -37,7 +37,7 @@ public final class Constraints {
      *
      * @return the condition
      */
-    public static <U, T> Predicate<Assignments<U, T>> equal(Object value) {
+    public static <U, T> Predicate<Assignments<U, T>> is(Object value) {
         return assignments -> Objects.equals(value, assignments.value(0));
     }
 
@@ -46,7 +46,7 @@ public final class Constraints {
      *
      * @return the condition
      */
-    public static <U, T> Predicate<Assignments<U, T>> notEqual(Object value) {
+    public static <U, T> Predicate<Assignments<U, T>> isNot(Object value) {
         return assignments -> !Objects.equals(value, assignments.value(0));
     }
 

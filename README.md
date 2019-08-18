@@ -13,6 +13,10 @@ EasyCSP supports CSPs to be formalized using objects or int expressions.
 
 ### Release Notes
 
+!Release 1.2.1
+- fix: ConflictMinimizing search algorithm bug.
+- feature: added full support (algorithms and API) for int specific CSPs and CSOPs.
+
 !Release 1.2.0
 - fix: IntDomain size() bug when containing both positive and negative ints.
 - feature: added int specific model classes, constraint expressions API and

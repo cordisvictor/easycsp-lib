@@ -22,6 +22,9 @@ import net.sourceforge.easycsp.*;
 import net.sourceforge.easycsp.Algorithm.Fitness;
 import net.sourceforge.easycsp.alg.Greedy;
 
+import static net.sourceforge.easycsp.Constraints.is;
+import static net.sourceforge.easycsp.Constraints.notEqual;
+
 public class Main {
 
     private static final int BOARD_SIZE = 8;
@@ -36,17 +39,18 @@ public class Main {
                 cells[cell] = new Cell(i, j);
             }
         }
-        EasyCSP<?, Cell> knighttour = EasyCSPBuilder.of("Knight's Tour", CELL_COUNT, new ObjectDomain<>((Cell[]) cells))
-                .constrain(Constraints.equal(START), 0)
+        EasyCSP<?, Cell> knighttour = EasyCSPBuilder.of("Knight's Tour", CELL_COUNT, new ObjectDomain<>(cells))
+                .constrain(is(START), 0)
                 .constrainSequentially(assignments -> {
                     int dX = Math.abs(assignments.value(0).x - assignments.value(1).x);
                     int dY = Math.abs(assignments.value(0).y - assignments.value(1).y);
                     return dX == 1 && dY == 2 || dX == 2 && dY == 1;
                 })
-                .constrainEachTwo(Constraints.notEqual())
+                .constrainEachTwo(notEqual())
                 .build();
+
         // solve:
-        Solver s = new Solver(new Greedy(knighttour, minDegree()));
+        Solver s = new EasyCSPSolver(new Greedy(knighttour, minDegree()));
         s.stream()
                 .findAny()
                 .ifPresent(System.out::println);

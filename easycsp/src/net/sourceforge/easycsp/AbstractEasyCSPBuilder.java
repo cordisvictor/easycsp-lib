@@ -21,6 +21,7 @@ package net.sourceforge.easycsp;
 import net.sourceforge.easycsp.Constraint.Assignments;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -29,17 +30,17 @@ import java.util.function.Predicate;
  * @param <U> variables underlying object class
  * @param <T> variables domain values class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.2.0
  */
-public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
+public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>, R extends AbstractEasyCSP<U, T>, B extends AbstractEasyCSPBuilder> {
 
     protected final String name;
-    protected final ArrayList<V> variables;
-    protected final ArrayList<Constraint> constraints;
+    protected final List<V> variables;
+    protected final List<Constraint> constraints;
     protected int constraintIdSeed;
 
-    protected AbstractEasyCSPBuilder(String name, ArrayList<V> variables) {
+    protected AbstractEasyCSPBuilder(String name, List<V> variables) {
         if (variables.isEmpty()) {
             throw new IllegalArgumentException("variables: empty");
         }
@@ -56,12 +57,12 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param condition condition of the constraint
      * @param indices   the indices of the variables
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrain(Predicate<Assignments<U, T>> condition, int... indices) {
+    public B constrain(Predicate<Assignments<U, T>> condition, int... indices) {
         if (indices.length == 0) {
             throw new IllegalArgumentException("indices: empty");
         }
         this.constraints.add(new Constraint(++this.constraintIdSeed, indices, condition));
-        return this;
+        return (B) this;
     }
 
     /**
@@ -69,11 +70,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      *
      * @param unaryCondition condition to constrain all variables with
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEach(Predicate<Assignments<U, T>> unaryCondition) {
+    public B constrainEach(Predicate<Assignments<U, T>> unaryCondition) {
         for (int i = 0; i < this.variables.size(); i++) {
             this.constrain(unaryCondition, i);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -82,11 +83,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param unaryCondition condition to constrain all variables with
      * @param indices        variables to constrain
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEach(Predicate<Assignments<U, T>> unaryCondition, int... indices) {
+    public B constrainEach(Predicate<Assignments<U, T>> unaryCondition, int... indices) {
         for (int i = 0; i < indices.length; i++) {
             this.constrain(unaryCondition, indices[i]);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -96,11 +97,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param start          of range (inclusive)
      * @param end            of range (exclusive)
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEachInRange(Predicate<Assignments<U, T>> unaryCondition, int start, int end) {
+    public B constrainEachInRange(Predicate<Assignments<U, T>> unaryCondition, int start, int end) {
         for (int i = start; i < end; i++) {
             this.constrain(unaryCondition, i);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -108,11 +109,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      *
      * @param binaryCondition binary condition to constrain all variables with
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainSequentially(Predicate<Assignments<U, T>> binaryCondition) {
+    public B constrainSequentially(Predicate<Assignments<U, T>> binaryCondition) {
         for (int i = 0; i < this.variables.size() - 1; i++) {
             this.constrain(binaryCondition, i, i + 1);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -121,11 +122,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param binaryCondition binary condition to constrain all variables with
      * @param indices         variables to constrain
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainSequentially(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
+    public B constrainSequentially(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
         for (int i = 0; i < indices.length - 1; i++) {
             this.constrain(binaryCondition, indices[i], indices[i + 1]);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -135,11 +136,11 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param start           of range (inclusive)
      * @param end             of range (exclusive)
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainSequentiallyInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
+    public B constrainSequentiallyInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
         for (int i = start; i < end - 1; i++) {
             this.constrain(binaryCondition, i, i + 1);
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -147,13 +148,13 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      *
      * @param binaryCondition binary condition to constrain all variable pairs with
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition) {
+    public B constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition) {
         for (int i = 0; i < this.variables.size() - 1; i++) {
             for (int j = i + 1; j < this.variables.size(); j++) {
                 this.constrain(binaryCondition, i, j);
             }
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -162,13 +163,13 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param binaryCondition binary condition to constrain all variable pairs with
      * @param indices         variables to constrain
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
+    public B constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
         for (int i = 0; i < indices.length - 1; i++) {
             for (int j = i + 1; j < indices.length; j++) {
                 this.constrain(binaryCondition, indices[i], indices[j]);
             }
         }
-        return this;
+        return (B) this;
     }
 
     /**
@@ -178,12 +179,19 @@ public abstract class AbstractEasyCSPBuilder<U, T, V extends Variable<U, T>> {
      * @param start           of range (inclusive)
      * @param end             of range (exclusive)
      */
-    public AbstractEasyCSPBuilder<U, T, V> constrainEachTwoInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
+    public B constrainEachTwoInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
         for (int i = start; i < end - 1; i++) {
             for (int j = i + 1; j < end; j++) {
                 this.constrain(binaryCondition, i, j);
             }
         }
-        return this;
+        return (B) this;
     }
+
+    /**
+     * Creates the CSP.
+     *
+     * @return the new csp
+     */
+    public abstract R build();
 }

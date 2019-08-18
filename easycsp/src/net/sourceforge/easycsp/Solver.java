@@ -18,8 +18,6 @@
  */
 package net.sourceforge.easycsp;
 
-import net.sourceforge.easycsp.alg.ForwardChecking;
-
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -27,53 +25,30 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Solver class that uses an {@link Algorithm} for CSP solving. If
- * {@linkplain Solver#solve()} is successful then
+ * Solver class that uses an {@link Algorithm} and solves a CSP.
+ * If {@linkplain Solver#solve()} is successful then
  * {@linkplain Solver#currentSolution()} will return the current
  * {@linkplain Solution}.
  *
- * @param <U> variables underlying object class
- * @param <T> variables domain values class
+ * @param <P> the csp problem class
+ * @param <S> the csp solution class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.0
  */
-public class Solver<U, T> implements Iterable<Solution<U, T>> {
+public abstract class Solver<P extends AbstractEasyCSP, S extends Solution> implements Iterable<S> {
 
-    private final Algorithm<U, T> algorithm;
+    private final Algorithm<P, S> algorithm;
     private long elapsedTime;
     private long solutionCount;
 
-    /**
-     * Creates a new instance with the default algorithm.
-     *
-     * @param easyCSP the CSP to solve
-     */
-    public Solver(EasyCSP<U, T> easyCSP) {
-        this(new ForwardChecking<>(easyCSP));
-    }
-
-    /**
-     * Creates a new instance with the given algorithm.
-     *
-     * @param a the algorithm to be used for solving
-     */
-    public Solver(Algorithm<U, T> a) {
+    protected Solver(Algorithm<P, S> a) {
         if (a == null) {
             throw new IllegalArgumentException("a: null");
         }
         this.algorithm = a;
         this.elapsedTime = 0;
         this.solutionCount = 0;
-    }
-
-    /**
-     * Returns the algorithm used by this solver.
-     *
-     * @return the algorithm
-     */
-    public <A extends Algorithm<U, T>> A getAlgorithm() {
-        return (A) algorithm;
     }
 
     /**
@@ -146,32 +121,23 @@ public class Solver<U, T> implements Iterable<Solution<U, T>> {
      *
      * @return the solution currently obtained by running the algorithm
      */
-    public Solution<U, T> currentSolution() {
+    public S currentSolution() {
         return this.algorithm.getSolution();
-    }
-
-    /**
-     * Resets the algorithm, elapsed time, and solution count.
-     */
-    public void reset() {
-        this.algorithm.reset();
-        this.elapsedTime = 0;
-        this.solutionCount = 0;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Iterator<Solution<U, T>> iterator() {
-        return new Iterator<Solution<U, T>>() {
+    public Iterator<S> iterator() {
+        return new Iterator<S>() {
             @Override
             public boolean hasNext() {
                 return solve();
             }
 
             @Override
-            public Solution<U, T> next() {
+            public S next() {
                 return currentSolution();
             }
         };
@@ -183,15 +149,15 @@ public class Solver<U, T> implements Iterable<Solution<U, T>> {
      *
      * @param solveMaxTime max time to find the next solution
      */
-    public Iterator<Solution<U, T>> iterator(long solveMaxTime) {
-        return new Iterator<Solution<U, T>>() {
+    public Iterator<S> iterator(long solveMaxTime) {
+        return new Iterator<S>() {
             @Override
             public boolean hasNext() {
                 return solveIn(solveMaxTime);
             }
 
             @Override
-            public Solution<U, T> next() {
+            public S next() {
                 return currentSolution();
             }
         };
@@ -203,11 +169,11 @@ public class Solver<U, T> implements Iterable<Solution<U, T>> {
      *
      * @return a lazy stream of solutions
      */
-    public Stream<Solution<U, T>> stream() {
+    public Stream<S> stream() {
         return streamIterator(iterator());
     }
 
-    private static <U, T> Stream<Solution<U, T>> streamIterator(Iterator<Solution<U, T>> i) {
+    private static <S> Stream<S> streamIterator(Iterator<S> i) {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(i, Spliterator.ORDERED), false);
     }
 
@@ -218,7 +184,7 @@ public class Solver<U, T> implements Iterable<Solution<U, T>> {
      * @param solveMaxTime max time to find each solution
      * @return a lazy stream of solutions
      */
-    public Stream<Solution<U, T>> stream(long solveMaxTime) {
+    public Stream<S> stream(long solveMaxTime) {
         return streamIterator(iterator(solveMaxTime));
     }
 }

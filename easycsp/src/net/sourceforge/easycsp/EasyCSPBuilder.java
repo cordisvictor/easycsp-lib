@@ -18,10 +18,8 @@
  */
 package net.sourceforge.easycsp;
 
-import net.sourceforge.easycsp.Constraint.Assignments;
-
 import java.util.ArrayList;
-import java.util.function.Predicate;
+import java.util.List;
 
 /**
  * EasyCSPBuilder class is used at creating and constraining EasyCSPs.
@@ -29,10 +27,10 @@ import java.util.function.Predicate;
  * @param <U> variables underlying object class
  * @param <T> variables domain values class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.2.0
  */
-public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Variable<U, T>> {
+public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Variable<U, T>, EasyCSP<U, T>, EasyCSPBuilder<U, T>> {
 
     /**
      * Creates a builder with the specified name, number of variables and the
@@ -44,7 +42,7 @@ public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Var
      * @return the builder
      */
     public static <U, T> EasyCSPBuilder<U, T> of(String name, int varCount, Domain<T> sharedDomain) {
-        ArrayList<Variable<U, T>> variables = new ArrayList<>(varCount);
+        List<Variable<U, T>> variables = new ArrayList<>(varCount);
         for (int i = 0; i < varCount; i++) {
             variables.add(new Variable<>(i, sharedDomain));
         }
@@ -59,7 +57,7 @@ public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Var
      * @return the builder
      */
     public static <U, T> EasyCSPBuilder<U, T> of(String name, Domain<T>... domains) {
-        ArrayList<Variable<U, T>> variables = new ArrayList<>(domains.length);
+        List<Variable<U, T>> variables = new ArrayList<>(domains.length);
         for (int i = 0; i < domains.length; i++) {
             variables.add(new Variable<>(i, domains[i]));
         }
@@ -76,7 +74,7 @@ public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Var
      * @return the builder
      */
     public static <U, T> EasyCSPBuilder<U, T> of(String name, Domain<T> sharedDomain, U... varData) {
-        ArrayList<Variable<U, T>> variables = new ArrayList<>(varData.length);
+        List<Variable<U, T>> variables = new ArrayList<>(varData.length);
         for (int i = 0; i < varData.length; i++) {
             variables.add(new Variable<>(i, varData[i], sharedDomain));
         }
@@ -91,14 +89,14 @@ public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Var
      * @return the builder
      */
     public static <U, T> EasyCSPBuilder<U, T> of(String name, Variable<U, T>... variables) {
-        ArrayList<Variable<U, T>> variableList = new ArrayList<>(variables.length);
+        List<Variable<U, T>> variableList = new ArrayList<>(variables.length);
         for (int i = 0; i < variables.length; i++) {
             variableList.add(variables[i]);
         }
         return new EasyCSPBuilder<>(name, variableList);
     }
 
-    private EasyCSPBuilder(String name, ArrayList<Variable<U, T>> variables) {
+    private EasyCSPBuilder(String name, List<Variable<U, T>> variables) {
         super(name, variables);
     }
 
@@ -106,97 +104,6 @@ public final class EasyCSPBuilder<U, T> extends AbstractEasyCSPBuilder<U, T, Var
      * {@inheritDoc}
      */
     @Override
-    public EasyCSPBuilder<U, T> constrain(Predicate<Assignments<U, T>> condition, int... indices) {
-        super.constrain(condition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEach(Predicate<Assignments<U, T>> unaryCondition) {
-        super.constrainEach(unaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEach(Predicate<Assignments<U, T>> unaryCondition, int... indices) {
-        super.constrainEach(unaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEachInRange(Predicate<Assignments<U, T>> unaryCondition, int start, int end) {
-        super.constrainEachInRange(unaryCondition, start, end);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainSequentially(Predicate<Assignments<U, T>> binaryCondition) {
-        super.constrainSequentially(binaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainSequentially(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
-        super.constrainSequentially(binaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainSequentiallyInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
-        super.constrainSequentiallyInRange(binaryCondition, start, end);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition) {
-        super.constrainEachTwo(binaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEachTwo(Predicate<Assignments<U, T>> binaryCondition, int... indices) {
-        super.constrainEachTwo(binaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public EasyCSPBuilder<U, T> constrainEachTwoInRange(Predicate<Assignments<U, T>> binaryCondition, int start, int end) {
-        super.constrainEachTwoInRange(binaryCondition, start, end);
-        return this;
-    }
-
-    /**
-     * Creates the EasyCSP.
-     *
-     * @return a new easy csp
-     */
     public EasyCSP<U, T> build() {
         return new EasyCSP<>(this.name, this.variables.toArray(new Variable[0]), this.constraints.toArray(new Constraint[0]));
     }

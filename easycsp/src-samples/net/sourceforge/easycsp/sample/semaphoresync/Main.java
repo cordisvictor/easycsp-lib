@@ -42,25 +42,25 @@ public class Main {
                 .constrain(notEqual(), 4, 5)
                 .build();
 
+        // solve:
         // since estimation and evaluation functions are alike for this csp,
         // the same instance will be used for both estimation and evaluation.
-        Fitness<Object, Integer> estimation = (s, idx, score) -> {
-            int varIdxVal = s.value(idx);
-            for (int i = 0; i < idx; i++) {
-                if (s.value(i) == varIdxVal) {
-                    return score;
-                }
-            }
-            return score + 1;
-        };
-
-        // solve:
-        BranchAndBound alg = BranchAndBound.minimizationOf(semsync, estimation, estimation);
-        Solver<?, Integer> solver = new Solver(alg);
+        BranchAndBound alg = BranchAndBound.minimizationOf(semsync, Main::estimate, Main::estimate);
+        Solver solver = new EasyCSPSolver<>(alg);
         solver.stream()
                 .forEach(solution -> {
                     System.out.println(solution + ", with " + alg.evaluation() + " states");
                 });
         System.out.println(solver.getSolutionCount() + " optimal solution(s) in " + solver.getElapsedTime() / 1000.00 + " seconds");
+    }
+
+    private static double estimate(Solution<?, Integer> s, int idx, double score) {
+        int varIdxVal = s.value(idx);
+        for (int i = 0; i < idx; i++) {
+            if (s.value(i) == varIdxVal) {
+                return score;
+            }
+        }
+        return score + 1;
     }
 }

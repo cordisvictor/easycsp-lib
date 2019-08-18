@@ -23,6 +23,7 @@ import net.sourceforge.easycsp.Constraint.Assignments;
 
 import java.util.function.Predicate;
 
+import static net.sourceforge.easycsp.Constraints.is;
 import static net.sourceforge.easycsp.Constraints.equal;
 import static net.sourceforge.easycsp.Constraints.notEqual;
 
@@ -79,20 +80,20 @@ public class Main {
                 .constrain(diffEq1, 24, 23) // The green house is immediately to the right of the ivory house.
                 .constrain(equal(), 7, 17) // The Old Gold smoker owns snails.
                 .constrain(equal(), 5, 20) // Kools are smoked in the yellow house.
-                .constrain(equal(3), 12) // Milk is drunk in the middle house.
-                .constrain(equal(1), 0) // The Norwegian lives in the first house.
+                .constrain(is(3), 12) // Milk is drunk in the middle house.
+                .constrain(is(1), 0) // The Norwegian lives in the first house.
                 .constrain(absDiffEq1, 6, 15) // The man who smokes Chesterfields lives in the house next to the man with the fox.
                 .constrain(absDiffEq1, 5, 16) // Kools are smoked in the house next to the house where the horse is kept.
                 .constrain(equal(), 8, 13) // The Lucky Strike smoker drinks orange juice.
                 .constrain(equal(), 4, 9) // The Japanese smokes Parliaments.
                 .constrain(absDiffEq1, 0, 21) // The Norwegian lives next to the blue house.
                 .build();
+
         // solve:
         try {
-
             zebra.achieveArcConsistency();
 
-            Solver<String, Integer> solver = new Solver(zebra);
+            EasyCSPSolver<String, Integer> solver = new EasyCSPSolver<>(zebra);
             solver.stream()
                     .findFirst()
                     .ifPresent(Main::prettyPrint);

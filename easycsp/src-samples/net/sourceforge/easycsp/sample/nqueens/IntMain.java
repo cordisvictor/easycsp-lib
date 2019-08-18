@@ -18,16 +18,13 @@
  */
 package net.sourceforge.easycsp.sample.nqueens;
 
-import net.sourceforge.easycsp.IntDomain;
-import net.sourceforge.easycsp.numeric.IntEasyCSP;
-import net.sourceforge.easycsp.numeric.IntEasyCSPBuilder;
-import net.sourceforge.easycsp.numeric.IntSolver;
+import net.sourceforge.easycsp.*;
 
 import static net.sourceforge.easycsp.Constraints.notEqual;
 
 public class IntMain {
 
-    private static final int BOARD_SIZE = 124;
+    private static final int BOARD_SIZE = 131;
 
     public static void main(String[] args) {
         // create CSP(Z,D,C):
@@ -41,10 +38,10 @@ public class IntMain {
         nqueensBuilder.constrainEachTwoInRange(notEqual(), 0, BOARD_SIZE);
         nqueensBuilder.constrainEachTwoInRange(notEqual(), BOARD_SIZE, 2 * BOARD_SIZE);
         nqueensBuilder.constrainEachTwoInRange(notEqual(), 2 * BOARD_SIZE, 3 * BOARD_SIZE);
-        IntEasyCSP nqueens = nqueensBuilder.build();
+        IntEasyCSP<?> nqueens = nqueensBuilder.build();
 
         // solve:
-        IntSolver<?> solver = new IntSolver<>(nqueens);
+        IntEasyCSPSolver<?> solver = new IntEasyCSPSolver(nqueens);
         solver.stream()
                 .limit(100)
                 .map(sol -> sol.toStringFirst(BOARD_SIZE))

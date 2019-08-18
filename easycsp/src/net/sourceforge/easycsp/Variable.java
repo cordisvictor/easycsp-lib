@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * @param <U> underlying object class
  * @param <T> domain values class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.1.0
+ * @version 1.2.1
  * @since 1.0
  */
 public class Variable<U, T> implements Supplier<U> {
@@ -62,6 +62,15 @@ public class Variable<U, T> implements Supplier<U> {
         this.id = id;
         this.underlying = underlying;
         this.domain = domain;
+    }
+
+    /**
+     * Creates a new instance with just the given id. Should be used just for sub-classing.
+     */
+    protected Variable(int id) {
+        this.id = id;
+        this.underlying = null;
+        this.domain = null;
     }
 
     /**

@@ -31,10 +31,10 @@ import java.util.stream.StreamSupport;
  * @param <U> variables underlying object class
  * @param <T> variables domain values class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.0
  */
-public final class Solution<U, T> implements PartialSolution, Iterable<T> {
+public class Solution<U, T> implements PartialSolution, Iterable<T> {
 
     private static final Object UNASSIGNED = new Object() {
         @Override
@@ -48,7 +48,13 @@ public final class Solution<U, T> implements PartialSolution, Iterable<T> {
     private int assignedCount;
     private AssignmentsImpl assignmentsView;
 
-    Solution(AbstractEasyCSP<U, T> sourceCSP) {
+    /**
+     * Creates a new solution for the given <code>sourceCSP</code>,
+     * with all the variables unassigned.
+     *
+     * @param sourceCSP of the solution
+     */
+    public Solution(AbstractEasyCSP<U, T> sourceCSP) {
         this.source = sourceCSP;
         this.values = (T[]) new Object[sourceCSP.variableCount()];
         Arrays.fill(this.values, UNASSIGNED);
@@ -146,10 +152,7 @@ public final class Solution<U, T> implements PartialSolution, Iterable<T> {
      * @param domainValueIndex of the variable domain value
      */
     public void assignFromDomain(int variableIndex, int domainValueIndex) {
-        if (!isAssigned(variableIndex)) {
-            this.assignedCount++;
-        }
-        this.values[variableIndex] = this.source.variableAt(variableIndex).getDomain().get(domainValueIndex);
+        assign(variableIndex, this.source.variableAt(variableIndex).getDomain().get(domainValueIndex));
     }
 
     /**

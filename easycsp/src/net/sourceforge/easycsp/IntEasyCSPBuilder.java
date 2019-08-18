@@ -16,30 +16,29 @@
  * Please contact the author ( cordis.victor@gmail.com ) if you need additional
  * information or have any questions.
  */
-package net.sourceforge.easycsp.numeric;
+package net.sourceforge.easycsp;
 
-import net.sourceforge.easycsp.AbstractEasyCSPBuilder;
-import net.sourceforge.easycsp.Constraint;
 import net.sourceforge.easycsp.Constraint.Assignments;
-import net.sourceforge.easycsp.IntDomain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.IntBinaryOperator;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 /**
  * IntEasyCSPBuilder class is used at creating and constraining IntEasyCSPs.
  *
  * @param <U> variables underlying object class
  * @author Cordis Victor ( cordis.victor at gmail.com)
- * @version 1.2.0
+ * @version 1.2.1
  * @since 1.2.0
  */
-public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Integer, IntVariable<U>> {
+public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Integer, IntVariable<U>, IntEasyCSP<U>, IntEasyCSPBuilder<U>> {
 
     /**
      * Creates a builder with the specified name, number of variables and the
@@ -51,9 +50,9 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
      * @return the builder
      */
     public static <U> IntEasyCSPBuilder<U> of(String name, int varCount, IntDomain sharedDomain) {
-        ArrayList<IntVariable<U>> variableList = IntStream.range(0, varCount)
+        List<IntVariable<U>> variableList = IntStream.range(0, varCount)
                 .mapToObj(i -> new IntVariable<U>(i, sharedDomain))
-                .collect(toCollection(ArrayList::new));
+                .collect(toList());
         return new IntEasyCSPBuilder<>(name, variableList);
     }
 
@@ -65,7 +64,7 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
      * @return the builder
      */
     public static <U> IntEasyCSPBuilder<U> of(String name, IntDomain... domains) {
-        ArrayList<IntVariable<U>> variables = new ArrayList<>(domains.length);
+        List<IntVariable<U>> variables = new ArrayList<>(domains.length);
         for (int i = 0; i < domains.length; i++) {
             variables.add(new IntVariable<>(i, domains[i]));
         }
@@ -82,7 +81,7 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
      * @return the builder
      */
     public static <U> IntEasyCSPBuilder<U> of(String name, IntDomain sharedDomain, U... varData) {
-        ArrayList<IntVariable<U>> variables = new ArrayList<>(varData.length);
+        List<IntVariable<U>> variables = new ArrayList<>(varData.length);
         for (int i = 0; i < varData.length; i++) {
             variables.add(new IntVariable<>(i, varData[i], sharedDomain));
         }
@@ -97,110 +96,18 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
      * @return the builder
      */
     public static <U> IntEasyCSPBuilder<U> of(String name, IntVariable<U>... variables) {
-        ArrayList<IntVariable<U>> variableList = Arrays.stream(variables).collect(toCollection(ArrayList::new));
-        return new IntEasyCSPBuilder<>(name, variableList);
+        return new IntEasyCSPBuilder<>(name, Arrays.stream(variables).collect(toList()));
     }
 
     private final int originalVariableCount;
     private int variableIdSeed;
     private InfixConstraintInfo<U> previousInfixConstraintInfo;
 
-
-    private IntEasyCSPBuilder(String name, ArrayList<IntVariable<U>> variables) {
+    private IntEasyCSPBuilder(String name, List<IntVariable<U>> variables) {
         super(name, variables);
         this.originalVariableCount = variables.size();
         this.variableIdSeed = 0;
         this.previousInfixConstraintInfo = null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrain(Predicate<Assignments<U, Integer>> condition, int... indices) {
-        super.constrain(condition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEach(Predicate<Assignments<U, Integer>> unaryCondition) {
-        super.constrainEach(unaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEach(Predicate<Assignments<U, Integer>> unaryCondition, int... indices) {
-        super.constrainEach(unaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEachInRange(Predicate<Assignments<U, Integer>> unaryCondition, int start, int end) {
-        super.constrainEachInRange(unaryCondition, start, end);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainSequentially(Predicate<Assignments<U, Integer>> binaryCondition) {
-        super.constrainSequentially(binaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainSequentially(Predicate<Assignments<U, Integer>> binaryCondition, int... indices) {
-        super.constrainSequentially(binaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainSequentiallyInRange(Predicate<Assignments<U, Integer>> binaryCondition, int start, int end) {
-        super.constrainSequentiallyInRange(binaryCondition, start, end);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEachTwo(Predicate<Assignments<U, Integer>> binaryCondition) {
-        super.constrainEachTwo(binaryCondition);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEachTwo(Predicate<Assignments<U, Integer>> binaryCondition, int... indices) {
-        super.constrainEachTwo(binaryCondition, indices);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public IntEasyCSPBuilder<U> constrainEachTwoInRange(Predicate<Assignments<U, Integer>> binaryCondition, int start, int end) {
-        super.constrainEachTwoInRange(binaryCondition, start, end);
-        return this;
     }
 
     /**
@@ -223,10 +130,9 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
     }
 
     /**
-     * Creates the IntEasyCSP.
-     *
-     * @return a new int easy csp
+     * {@inheritDoc}
      */
+    @Override
     public IntEasyCSP<U> build() {
         setPreviousInfixConstraint();
         return new IntEasyCSP<>(this.name, this.originalVariableCount, this.variables.toArray(new IntVariable[0]), this.constraints.toArray(new Constraint[0]));
@@ -299,6 +205,7 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
     }
 
     public interface RHSTerm {
+
         RHSTerm plus(int value);
 
         RHSTerm plusVar(int var1Index);
@@ -339,153 +246,118 @@ public final class IntEasyCSPBuilder<U> extends AbstractEasyCSPBuilder<U, Intege
             return variables.size() - 1;
         }
 
-        private int binaryAuxVariable(IntDomain domain, int var0Index, IntBinaryOperator operator) {
-            return registerAuxVariable(new IntVariable<>(--variableIdSeed, domain, var0Index, operator));
+        private int binaryAuxVariable(int var0Index, IntUnaryOperator operator) {
+            return registerAuxVariable(new IntVariable<>(--variableIdSeed, var0Index, operator));
         }
 
-        private int ternaryAuxVariable(IntDomain domain, int var0Index, int var1Index, IntBinaryOperator operator) {
-            return registerAuxVariable(new IntVariable<>(--variableIdSeed, domain, var0Index, var1Index, operator));
+        private int ternaryAuxVariable(int var0Index, int var1Index, IntBinaryOperator operator) {
+            return registerAuxVariable(new IntVariable<>(--variableIdSeed, var0Index, var1Index, operator));
         }
 
         private void constrainUnary(Predicate<Assignments<U, Integer>> unary) {
             constrain(unary, var0Index);
         }
 
-        private TermImpl constrainBinary(Predicate<Assignments<U, Integer>> binary, IntDomain domain, IntBinaryOperator operator) {
-            int varAuxIndex = binaryAuxVariable(domain, var0Index, operator);
+        private TermImpl constrainBinary(Predicate<Assignments<U, Integer>> binary, IntUnaryOperator operator) {
+            int varAuxIndex = binaryAuxVariable(var0Index, operator);
             constrain(binary, var0Index, varAuxIndex);
             return new TermImpl(varAuxIndex);
         }
 
-        private TermImpl constrainTernary(Predicate<Assignments<U, Integer>> ternary, int var1Index, IntDomain domain, IntBinaryOperator operator) {
-            int varAuxIndex = ternaryAuxVariable(domain, var0Index, var1Index, operator);
+        private TermImpl constrainTernary(Predicate<Assignments<U, Integer>> ternary, int var1Index, IntBinaryOperator operator) {
+            int varAuxIndex = ternaryAuxVariable(var0Index, var1Index, operator);
             constrain(ternary, var0Index, var1Index, varAuxIndex);
             return new TermImpl(varAuxIndex);
         }
 
         @Override
         public TermImpl plus(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
             return constrainBinary(assignments -> assignments.value(0) + value == assignments.value(1),
-                    new IntDomain(var0Domain.min() + value, var0Domain.max() + value),
-                    (i0, i1) -> i0 + value);
+                    i0 -> i0 + value);
         }
 
         @Override
         public TermImpl plusVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            return constrainTernary(assignments -> assignments.value(0) + assignments.value(1) == assignments.value(2), var1Index,
-                    new IntDomain(var0Domain.min() + var1Domain.min(), var0Domain.max() + var1Domain.max()),
+            return constrainTernary(
+                    assignments -> assignments.value(0) + assignments.value(1) == assignments.value(2), var1Index,
                     (i0, i1) -> i0 + i1);
         }
 
         @Override
         public TermImpl minus(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            return constrainBinary(assignments -> assignments.value(0) - value == assignments.value(1),
-                    new IntDomain(var0Domain.min() - value, var0Domain.max() - value),
-                    (i0, i1) -> i0 - value);
+            return constrainBinary(
+                    assignments -> assignments.value(0) - value == assignments.value(1),
+                    i0 -> i0 - value);
         }
 
         @Override
         public TermImpl minusVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            return constrainTernary(assignments -> assignments.value(0) - assignments.value(1) == assignments.value(2), var1Index,
-                    new IntDomain(var0Domain.min() - var1Domain.max(), var0Domain.max() - var1Domain.min()),
+            return constrainTernary(
+                    assignments -> assignments.value(0) - assignments.value(1) == assignments.value(2), var1Index,
                     (i0, i1) -> i0 - i1);
         }
 
         @Override
         public TermImpl multipliedBy(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            int minXval = var0Domain.min() * value;
-            int maxXval = var0Domain.max() * value;
-            IntDomain varAuxDomain = minXval < maxXval ? new IntDomain(minXval, maxXval) : new IntDomain(maxXval, minXval);
-            return constrainBinary(assignments -> assignments.value(0) * value == assignments.value(1), varAuxDomain, (i0, i1) -> i0 * value);
+            return constrainBinary(
+                    assignments -> assignments.value(0) * value == assignments.value(1),
+                    i0 -> i0 * value);
         }
 
         @Override
         public TermImpl multipliedByVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            int minXmin = var0Domain.min() * var1Domain.min();
-            int minXmax = var0Domain.min() * var1Domain.max();
-            int maxXmin = var0Domain.max() * var1Domain.min();
-            int maxXmax = var0Domain.max() * var1Domain.max();
-            return constrainTernary(assignments -> assignments.value(0) * assignments.value(1) == assignments.value(2), var1Index,
-                    new IntDomain(Math.min(Math.min(minXmin, minXmax), Math.min(maxXmin, maxXmax)),
-                            Math.max(Math.max(minXmin, minXmax), Math.max(maxXmin, maxXmax))),
+            return constrainTernary(
+                    assignments -> assignments.value(0) * assignments.value(1) == assignments.value(2), var1Index,
                     (i0, i1) -> i0 * i1);
         }
 
         @Override
         public TermImpl dividedBy(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            int minDval = var0Domain.min() / value;
-            int maxDval = var0Domain.max() / value;
-            IntDomain varAuxDomain = minDval < maxDval ? new IntDomain(minDval, maxDval) : new IntDomain(maxDval, minDval);
-            return constrainBinary(assignments -> assignments.value(0) / value == assignments.value(1), varAuxDomain, (i0, i1) -> i0 / value);
+            return constrainBinary(
+                    assignments -> assignments.value(0) / value == assignments.value(1),
+                    i0 -> i0 / value);
         }
 
         @Override
         public TermImpl dividedByVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            int minDmin = var0Domain.min() / var1Domain.min();
-            int minDmax = var0Domain.min() / var1Domain.max();
-            int maxDmin = var0Domain.max() / var1Domain.min();
-            int maxDmax = var0Domain.max() / var1Domain.max();
-            return constrainTernary(assignments -> assignments.value(0) / assignments.value(1) == assignments.value(2), var1Index,
-                    new IntDomain(Math.min(Math.min(minDmin, minDmax), Math.min(maxDmin, maxDmax)),
-                            Math.max(Math.max(minDmin, minDmax), Math.max(maxDmin, maxDmax))),
+            return constrainTernary(
+                    assignments -> assignments.value(0) / assignments.value(1) == assignments.value(2), var1Index,
                     (i0, i1) -> i0 / i1);
         }
 
         @Override
         public TermImpl maxBy(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            return constrainBinary(assignments -> Math.max(assignments.value(0), value) == assignments.value(1),
-                    new IntDomain(Math.max(var0Domain.min(), value), Math.max(var0Domain.max(), value)),
-                    (i0, i1) -> Math.max(i0, value));
+            return constrainBinary(
+                    assignments -> Math.max(assignments.value(0), value) == assignments.value(1),
+                    i0 -> Math.max(i0, value));
         }
 
         @Override
         public TermImpl maxByVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            return constrainTernary(assignments -> Math.max(assignments.value(0), assignments.value(1)) == assignments.value(2), var1Index,
-                    new IntDomain(Math.max(var0Domain.min(), var1Domain.min()), Math.max(var0Domain.max(), var1Domain.max())),
+            return constrainTernary(
+                    assignments -> Math.max(assignments.value(0), assignments.value(1)) == assignments.value(2), var1Index,
                     (i0, i1) -> Math.max(i0, i1));
         }
 
         @Override
         public TermImpl minBy(int value) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            return constrainBinary(assignments -> Math.min(assignments.value(0), value) == assignments.value(1),
-                    new IntDomain(Math.min(var0Domain.min(), value), Math.min(var0Domain.max(), value)),
-                    (i0, i1) -> Math.min(i0, value));
+            return constrainBinary(
+                    assignments -> Math.min(assignments.value(0), value) == assignments.value(1),
+                    i0 -> Math.min(i0, value));
         }
 
         @Override
         public TermImpl minByVar(int var1Index) {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            IntDomain var1Domain = variables.get(var1Index).getDomain();
-            return constrainTernary(assignments -> Math.min(assignments.value(0), assignments.value(1)) == assignments.value(2), var1Index,
-                    new IntDomain(Math.min(var0Domain.min(), var1Domain.min()), Math.min(var0Domain.max(), var1Domain.max())),
+            return constrainTernary(
+                    assignments -> Math.min(assignments.value(0), assignments.value(1)) == assignments.value(2), var1Index,
                     (i0, i1) -> Math.min(i0, i1));
         }
 
         @Override
         public TermImpl abs() {
-            IntDomain var0Domain = variables.get(this.var0Index).getDomain();
-            int var0Min = var0Domain.min();
-            int var0Max = var0Domain.max();
-            IntDomain auxDomain = var0Min >= 0 ? new IntDomain(var0Min, var0Max) :
-                    var0Max < 0 ? new IntDomain(-var0Max, -var0Min) :
-                            new IntDomain(0, Math.max(-var0Min, var0Max));
-            return constrainBinary(assignments -> Math.abs(assignments.value(0)) == assignments.value(1), auxDomain, (i0, i1) -> Math.abs(i0));
+            return constrainBinary(
+                    assignments -> Math.abs(assignments.value(0)) == assignments.value(1),
+                    i0 -> Math.abs(i0));
         }
 
         @Override
